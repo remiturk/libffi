@@ -1,0 +1,93 @@
+{-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls #-}
+module Main where
+
+import Control.Arrow
+import Control.Applicative
+import Control.Monad
+import Data.Traversable hiding (mapM)
+import Data.List
+import Data.Char
+import System.Environment
+import System.IO
+import System.Posix.DynamicLinker
+
+import Foreign.C.Types
+import Foreign.Ptr
+import Foreign.Storable
+import Foreign.C.String
+import Foreign.Marshal
+
+import ForeignFFI
+
+data Call = Call String (Maybe Type) [Value]
+    deriving (Eq, Show)
+
+data Type = TInt | TString | TPointer
+    deriving (Eq, Show, Read)
+
+data Value = VInt Int | VString String | VPointer (Ptr ())
+    deriving (Eq, Show, Read)
+
+instance Read (Ptr a) where
+    readsPrec p = map (first $ plusPtr nullPtr) . readsPrec p
+
+-- FIXME: 32bitness!
+
+valueToFFI :: Value -> IO (Ptr CType, Ptr CValue)
+valueToFFI (VInt n) = do
+    (,) ffi_type_sint32 . castPtr <$> new n
+valueToFFI (VString s) = do
+    (,) ffi_type_pointer . castPtr <$> (new =<< newCString s)
+valueToFFI (VPointer p) = do
+    (,) ffi_type_sint32 . castPtr <$> new p
+
+freeValue :: Value -> Ptr CValue -> IO ()
+freeValue (VInt _) ptr      = free ptr
+freeValue (VString _) ptr   = peek (castPtr ptr) >>= free >> free ptr
+freeValue (VPointer _) ptr  = free ptr
+
+typeToFFI           :: Type -> (Ptr CType, (Ptr a -> IO b) -> IO b)
+typeToFFI TInt      = (ffi_type_sint32, allocaBytes $ sizeOf (undefined :: Int))
+typeToFFI TString   = (ffi_type_pointer, allocaBytes $ sizeOf (undefined :: CString))
+typeToFFI TPointer  = (ffi_type_pointer, allocaBytes $ sizeOf (undefined :: Ptr ()))
+
+valueFromFFI :: Ptr CValue -> Type -> IO Value
+valueFromFFI ptr TInt
+    = VInt <$> peek (castPtr ptr)
+valueFromFFI ptr TString
+    = VString <$> (peekCString =<< peek (castPtr ptr))
+valueFromFFI ptr TPointer
+    = VPointer <$> peek (castPtr ptr)
+
+call :: DL -> Call -> IO (Maybe Value)
+call dl (Call sym retType args) = do
+    funPtr <- dlsym dl sym
+    callFunPtr funPtr retType args
+
+callFunPtr :: FunPtr a -> Maybe Type -> [Value] -> IO (Maybe Value)
+callFunPtr funPtr mbRetType args = allocaBytes cif_size $ \cif -> do
+    (types, values) <- unzip <$> mapM valueToFFI args
+    withArray types $ \ctypes -> do
+        ffi_prep_cif cif ffi_default_abi (genericLength args) cRetType ctypes
+        withArray values $ \cvalues -> do
+            allocaRet $ \cRet -> do
+                ffi_call cif funPtr cRet cvalues
+                zipWithM_ freeValue args values
+                traverse (valueFromFFI cRet) mbRetType
+    where
+        (cRetType, allocaRet) = maybe (ffi_type_void, ($ nullPtr)) typeToFFI mbRetType
+
+main = do
+    lib:sym:ret:args <- getArgs
+    dl <- dlopen lib [RTLD_NOW]
+    call dl (Call sym (read ret) [ if isDigit (head arg) then VInt (read arg) else VString arg | arg <- args ])
+        >>= print
+
+{-
+dl <- dlopen "/lib/libc.so.6" [RTLD_NOW]
+Just p <- call dl $ Call "calloc" (Just TPointer) [VInt 1, VInt 41]
+call dl $ Call "memset" Nothing [p, VInt 98, VInt 40]
+call dl $ Call "memset" Nothing [p, VInt 97, VInt 20]
+call dl $ Call "strfry" (Just TString) [p]
+call dl $ Call "free" Nothing [p]
+-}
