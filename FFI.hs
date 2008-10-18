@@ -33,18 +33,16 @@ instance Read (Ptr a) where
 
 -- FIXME: 32bitness!
 
-valueToFFI :: Value -> IO (Ptr CType, Ptr CValue)
+valueToFFI :: Value -> IO (Ptr CType, Ptr CValue, IO ())
 valueToFFI (VInt n) = do
-    (,) ffi_type_sint32 . castPtr <$> new n
+    ptr <- new n
+    return (ffi_type_sint32, castPtr ptr, free ptr)
 valueToFFI (VString s) = do
-    (,) ffi_type_pointer . castPtr <$> (new =<< newCString s)
+    ptr <- new =<< newCString s
+    return (ffi_type_pointer, castPtr ptr, peek (castPtr ptr) >>= free >> free ptr)
 valueToFFI (VPointer p) = do
-    (,) ffi_type_sint32 . castPtr <$> new p
-
-freeValue :: Value -> Ptr CValue -> IO ()
-freeValue (VInt _) ptr      = free ptr
-freeValue (VString _) ptr   = peek (castPtr ptr) >>= free >> free ptr
-freeValue (VPointer _) ptr  = free ptr
+    ptr <- new p
+    return (ffi_type_pointer, castPtr ptr, free ptr)
 
 typeToFFI           :: Type -> (Ptr CType, (Ptr a -> IO b) -> IO b)
 typeToFFI TInt      = (ffi_type_sint32, allocaBytes $ sizeOf (undefined :: Int))
@@ -66,13 +64,13 @@ call dl (Call sym retType args) = do
 
 callFunPtr :: FunPtr a -> Maybe Type -> [Value] -> IO (Maybe Value)
 callFunPtr funPtr mbRetType args = allocaBytes cif_size $ \cif -> do
-    (types, values) <- unzip <$> mapM valueToFFI args
+    (types, values, frees) <- unzip3 <$> mapM valueToFFI args
     withArray types $ \ctypes -> do
         ffi_prep_cif cif ffi_default_abi (genericLength args) cRetType ctypes
         withArray values $ \cvalues -> do
             allocaRet $ \cRet -> do
                 ffi_call cif funPtr cRet cvalues
-                zipWithM_ freeValue args values
+                sequence_ frees
                 traverse (valueFromFFI cRet) mbRetType
     where
         (cRetType, allocaRet) = maybe (ffi_type_void, ($ nullPtr)) typeToFFI mbRetType
