@@ -22,10 +22,10 @@ import ForeignFFI
 data Call = Call String (Maybe Type) [Value]
     deriving (Eq, Show)
 
-data Type = TInt | TString | TPointer
+data Type = TInt | TCInt | TString | TPointer
     deriving (Eq, Show, Read)
 
-data Value = VInt Int | VString String | VPointer (Ptr ())
+data Value = VInt Int | VCInt CInt | VString String | VPointer (Ptr ())
     deriving (Eq, Show, Read)
 
 instance Read (Ptr a) where
@@ -33,10 +33,18 @@ instance Read (Ptr a) where
 
 -- FIXME: 32bitness!
 
+ffi_type_hs_int = case sizeOf (undefined :: Int) of
+                    4   -> ffi_type_sint32
+                    8   -> ffi_type_sint64
+                    _   -> error "ffi_type_hs_int: unsupported sizeOf (_ :: Int)"
+
 valueToFFI :: Value -> IO (Ptr CType, Ptr CValue, IO ())
 valueToFFI (VInt n) = do
     ptr <- new n
-    return (ffi_type_sint32, castPtr ptr, free ptr)
+    return (ffi_type_hs_int, castPtr ptr, free ptr)
+valueToFFI (VCInt n) = do
+    ptr <- new n
+    return (ffi_type_sint, castPtr ptr, free ptr)
 valueToFFI (VString s) = do
     ptr <- new =<< newCString s
     return (ffi_type_pointer, castPtr ptr, peek (castPtr ptr) >>= free >> free ptr)
@@ -45,13 +53,16 @@ valueToFFI (VPointer p) = do
     return (ffi_type_pointer, castPtr ptr, free ptr)
 
 typeToFFI           :: Type -> (Ptr CType, (Ptr a -> IO b) -> IO b)
-typeToFFI TInt      = (ffi_type_sint32, allocaBytes $ sizeOf (undefined :: Int))
+typeToFFI TInt      = (ffi_type_hs_int, allocaBytes $ sizeOf (undefined :: Int))
+typeToFFI TCInt     = (ffi_type_sint, allocaBytes $ sizeOf (undefined :: CInt))
 typeToFFI TString   = (ffi_type_pointer, allocaBytes $ sizeOf (undefined :: CString))
 typeToFFI TPointer  = (ffi_type_pointer, allocaBytes $ sizeOf (undefined :: Ptr ()))
 
 valueFromFFI :: Ptr CValue -> Type -> IO Value
 valueFromFFI ptr TInt
     = VInt <$> peek (castPtr ptr)
+valueFromFFI ptr TCInt
+    = VCInt <$> peek (castPtr ptr)
 valueFromFFI ptr TString
     = VString <$> (peekCString =<< peek (castPtr ptr))
 valueFromFFI ptr TPointer
