@@ -73,16 +73,21 @@ call dl (Call sym retType args) = do
     funPtr <- dlsym dl sym
     callFunPtr funPtr retType args
 
-callFunPtr :: FunPtr a -> Maybe Type -> [Value] -> IO (Maybe Value)
-callFunPtr funPtr mbRetType args = allocaBytes cif_size $ \cif -> do
-    (types, values, frees) <- unzip3 <$> mapM valueToFFI args
-    withArray types $ \ctypes -> do
-        ffi_prep_cif cif ffi_default_abi (genericLength args) cRetType ctypes
-        withArray values $ \cvalues -> do
-            allocaRet $ \cRet -> do
+callFunPtr' :: FunPtr a -> Ptr CValue -> Ptr CType -> [Ptr CType] -> [Ptr CValue] -> IO ()
+callFunPtr' funPtr cRet cRetType types values
+    = allocaBytes cif_size $ \cif -> do
+        withArray types $ \ctypes -> do
+            ffi_prep_cif cif ffi_default_abi (genericLength types) cRetType ctypes
+            withArray values $ \cvalues -> do
                 ffi_call cif funPtr cRet cvalues
-                sequence_ frees
-                traverse (valueFromFFI cRet) mbRetType
+
+callFunPtr :: FunPtr a -> Maybe Type -> [Value] -> IO (Maybe Value)
+callFunPtr funPtr mbRetType args = do
+    (types, values, frees) <- unzip3 <$> mapM valueToFFI args
+    allocaRet $ \cRet -> do
+        callFunPtr' funPtr cRet cRetType types values
+        sequence_ frees
+        traverse (valueFromFFI cRet) mbRetType
     where
         (cRetType, allocaRet) = maybe (ffi_type_void, ($ nullPtr)) typeToFFI mbRetType
 
