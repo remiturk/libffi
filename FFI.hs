@@ -1,17 +1,11 @@
 {-# LANGUAGE ScopedTypeVariables, GADTs #-}
 module FFI where
 
-import Control.Arrow
-import Control.Applicative
 import Control.Monad
-import Data.Traversable hiding (mapM, sequence)
 import Data.List
 import Data.Char
 import Data.Int
 import Data.Word
-import System.Environment
-import System.IO
-import System.Mem
 import System.Posix.DynamicLinker
 
 import Foreign.C.Types

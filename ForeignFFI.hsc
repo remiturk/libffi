@@ -3,15 +3,12 @@ module ForeignFFI where
 
 #include <ffi.h>
 
-import Control.Applicative
 import Data.Int
 import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
 import Foreign.ForeignPtr
 import Foreign.Storable
-import Foreign.C.String
-import Foreign.Marshal.Utils
 
 data CValue
 data CType
