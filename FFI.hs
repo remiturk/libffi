@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables, GADTs #-}
-module Main where
+module FFI where
 
 import Control.Arrow
 import Control.Applicative
