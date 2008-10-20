@@ -35,35 +35,35 @@ ffi_type_hs_word = case sizeOf (undefined :: Word) of
 
 data Arg    = Arg (Ptr CType) (ForeignPtr CValue)
 
-data Type a where
-    Type    :: Ptr CType -> Int -> (Ptr CValue -> IO a) -> Type a
-    TyVoid  :: Type ()
+data RetType a where
+    RetType :: Ptr CType -> Int -> (Ptr CValue -> IO a) -> RetType a
+    RetVoid :: RetType ()
 
-argCInt      = storableFFIArg ffi_type_sint    :: CInt -> IO Arg
-argCUInt     = storableFFIArg ffi_type_uint    :: CUInt -> IO Arg
-argCLong     = storableFFIArg ffi_type_slong   :: CLong -> IO Arg
-argCULong    = storableFFIArg ffi_type_ulong   :: CULong -> IO Arg
+argCInt     = mkStorableArg ffi_type_sint   :: CInt -> IO Arg
+argCUInt    = mkStorableArg ffi_type_uint   :: CUInt -> IO Arg
+argCLong    = mkStorableArg ffi_type_slong  :: CLong -> IO Arg
+argCULong   = mkStorableArg ffi_type_ulong  :: CULong -> IO Arg
 
-argInt       = storableFFIArg ffi_type_hs_int  :: Int -> IO Arg
-argInt8      = storableFFIArg ffi_type_sint8   :: Int8 -> IO Arg
-argInt16     = storableFFIArg ffi_type_sint16  :: Int16 -> IO Arg
-argInt32     = storableFFIArg ffi_type_sint32  :: Int32 -> IO Arg
-argInt64     = storableFFIArg ffi_type_sint64  :: Int64 -> IO Arg
+argInt      = mkStorableArg ffi_type_hs_int :: Int -> IO Arg
+argInt8     = mkStorableArg ffi_type_sint8  :: Int8 -> IO Arg
+argInt16    = mkStorableArg ffi_type_sint16 :: Int16 -> IO Arg
+argInt32    = mkStorableArg ffi_type_sint32 :: Int32 -> IO Arg
+argInt64    = mkStorableArg ffi_type_sint64 :: Int64 -> IO Arg
 
-argWord      = storableFFIArg ffi_type_hs_word :: Word -> IO Arg
-argWord8     = storableFFIArg ffi_type_uint8   :: Word8 -> IO Arg
-argWord16    = storableFFIArg ffi_type_uint16  :: Word16 -> IO Arg
-argWord32    = storableFFIArg ffi_type_uint32  :: Word32 -> IO Arg
-argWord64    = storableFFIArg ffi_type_uint64  :: Word64 -> IO Arg
+argWord     = mkStorableArg ffi_type_hs_word:: Word -> IO Arg
+argWord8    = mkStorableArg ffi_type_uint8  :: Word8 -> IO Arg
+argWord16   = mkStorableArg ffi_type_uint16 :: Word16 -> IO Arg
+argWord32   = mkStorableArg ffi_type_uint32 :: Word32 -> IO Arg
+argWord64   = mkStorableArg ffi_type_uint64 :: Word64 -> IO Arg
 
-argCFloat   = storableFFIArg ffi_type_float  :: CFloat -> IO Arg
-argCDouble   = storableFFIArg ffi_type_double  :: CDouble -> IO Arg
+argCFloat   = mkStorableArg ffi_type_float  :: CFloat -> IO Arg
+argCDouble  = mkStorableArg ffi_type_double :: CDouble -> IO Arg
 
-argPtr       :: Ptr a -> IO Arg
-argPtr       = storableFFIArg ffi_type_pointer
+argPtr      :: Ptr a -> IO Arg
+argPtr      = mkStorableArg ffi_type_pointer
 
-argString    :: String -> IO Arg
-argString    = customPointerArg newCString free
+argString   :: String -> IO Arg
+argString   = customPointerArg newCString free
 
 customPointerArg :: (a -> IO (Ptr b)) -> (Ptr b -> IO ()) -> a -> IO Arg
 customPointerArg new free a = do
@@ -74,44 +74,45 @@ customPointerArg new free a = do
     addForeignPtrFinalizer finalizer fp
     return (Arg ffi_type_pointer (castForeignPtr fp))
 
-storableFFIArg :: forall a. Storable a => Ptr CType -> a -> IO Arg
-storableFFIArg cType a = do
+mkStorableArg :: forall a. Storable a => Ptr CType -> a -> IO Arg
+mkStorableArg cType a = do
     fp <- mallocForeignPtr
     withForeignPtr fp $ \ptr -> poke ptr a
     return (Arg cType (castForeignPtr fp))
 
-tyCInt  = storableFFIType ffi_type_sint (undefined :: CInt)
-tyCUInt = storableFFIType ffi_type_uint (undefined :: CUInt)
-tyCLong = storableFFIType ffi_type_slong (undefined :: CLong)
-tyCULong= storableFFIType ffi_type_ulong (undefined :: CULong)
+retCInt     = mkStorableRetType ffi_type_sint   (undefined :: CInt)
+retCUInt    = mkStorableRetType ffi_type_uint   (undefined :: CUInt)
+retCLong    = mkStorableRetType ffi_type_slong  (undefined :: CLong)
+retCULong   = mkStorableRetType ffi_type_ulong  (undefined :: CULong)
 
-tyInt   = storableFFIType ffi_type_hs_int (undefined :: Int)
-tyInt8  = storableFFIType ffi_type_sint8 (undefined :: Int8)
-tyInt16 = storableFFIType ffi_type_sint16 (undefined :: Int16)
-tyInt32 = storableFFIType ffi_type_sint32 (undefined :: Int32)
-tyInt64 = storableFFIType ffi_type_sint64 (undefined :: Int64)
+retInt      = mkStorableRetType ffi_type_hs_int (undefined :: Int)
+retInt8     = mkStorableRetType ffi_type_sint8  (undefined :: Int8)
+retInt16    = mkStorableRetType ffi_type_sint16 (undefined :: Int16)
+retInt32    = mkStorableRetType ffi_type_sint32 (undefined :: Int32)
+retInt64    = mkStorableRetType ffi_type_sint64 (undefined :: Int64)
 
-tyWord  = storableFFIType ffi_type_hs_word (undefined :: Word)
-tyWord8  = storableFFIType ffi_type_uint8 (undefined :: Word8)
-tyWord16 = storableFFIType ffi_type_uint16 (undefined :: Word16)
-tyWord32 = storableFFIType ffi_type_uint32 (undefined :: Word32)
-tyWord64 = storableFFIType ffi_type_uint64 (undefined :: Word64)
+retWord     = mkStorableRetType ffi_type_hs_word (undefined :: Word)
+retWord8    = mkStorableRetType ffi_type_uint8  (undefined :: Word8)
+retWord16   = mkStorableRetType ffi_type_uint16 (undefined :: Word16)
+retWord32   = mkStorableRetType ffi_type_uint32 (undefined :: Word32)
+retWord64   = mkStorableRetType ffi_type_uint64 (undefined :: Word64)
 
-tyCFloat= storableFFIType ffi_type_float (undefined :: CFloat)
-tyCDouble= storableFFIType ffi_type_double (undefined :: CDouble)
+retCFloat   = mkStorableRetType ffi_type_float  (undefined :: CFloat)
+retCDouble  = mkStorableRetType ffi_type_double (undefined :: CDouble)
 
-tyPtr   :: forall a. Type a -> Type (Ptr a)
-tyPtr _ = storableFFIType ffi_type_pointer (undefined :: Ptr a)
+retPtr      :: forall a. RetType a -> RetType (Ptr a)
+retPtr _    = mkStorableRetType ffi_type_pointer (undefined :: Ptr a)
 
-tyString    :: Type String
-tyString    = Type ffi_type_pointer
+retString   :: RetType String
+retString   = RetType ffi_type_pointer
                 (sizeOf (undefined :: Ptr CString))
                 (peekCString <=< peek . castPtr)
 
-storableFFIType         :: forall a. Storable a => Ptr CType -> a -> Type a
-storableFFIType cType _ = Type cType
-                            (sizeOf (undefined :: a))
-                            (peek . castPtr :: Ptr CValue -> IO a)
+mkStorableRetType :: forall a. Storable a => Ptr CType -> a -> RetType a
+mkStorableRetType cType _
+            = RetType cType
+                (sizeOf (undefined :: a))
+                (peek . castPtr :: Ptr CValue -> IO a)
 
 cTypeOfArg :: Arg -> Ptr CType
 cTypeOfArg (Arg cType _) = cType
@@ -119,13 +120,13 @@ cTypeOfArg (Arg cType _) = cType
 cValueOfArg :: Arg -> ForeignPtr CValue
 cValueOfArg (Arg _ cValue) = cValue
 
-callFFI :: DL -> String -> Type a -> [IO Arg] -> IO a
-callFFI dl sym mbRetType args = do
+callFFI :: DL -> String -> RetType a -> [IO Arg] -> IO a
+callFFI dl sym retType args = do
     funPtr <- dlsym dl sym
     args' <- sequence args
-    callFFI' funPtr mbRetType args'
+    callFFI' funPtr retType args'
 
-callFFI' :: forall a t. FunPtr t -> Type a -> [Arg] -> IO a
+callFFI' :: forall a t. FunPtr t -> RetType a -> [Arg] -> IO a
 callFFI' funPtr retType args
     = allocaBytes cif_size $ \cif -> do
         withArray (map cTypeOfArg args) $ \cTypes -> do
@@ -136,22 +137,22 @@ callFFI' funPtr retType args
                 withArray argPtrs $ \cArgPtrs -> do
                 withRet $ \cRet -> ffi_call cif funPtr cRet cArgPtrs
     where
-        -- cannot bind a pair here due to Type being a GADT
-        cRetType    = fst unType
-        withRet     = snd unType
-        unType      :: (Ptr CType, (Ptr CValue -> IO ()) -> IO a)
-        unType      = case retType of
-                            Type cRetType size peek -> (cRetType, \f -> allocaBytes size $ \cRet -> f cRet >> peek cRet)
-                            TyVoid  -> (ffi_type_void, \f -> f nullPtr >> return ())
+        -- cannot bind a pair here due to RetType being a GADT
+        cRetType    = fst unRetType
+        withRet     = snd unRetType
+        unRetType   :: (Ptr CType, (Ptr CValue -> IO ()) -> IO a)
+        unRetType   = case retType of
+                            RetType cRetType size peek -> (cRetType, \f -> allocaBytes size $ \cRet -> f cRet >> peek cRet)
+                            RetVoid  -> (ffi_type_void, \f -> f nullPtr >> return ())
 
 {-
-dl <- dlopen "/lib/libc.so.6" [RTLD_NOW]
-p <- callFFI dl "calloc" (tyPtr tyWord8) [argInt 1, argInt 41]
-callFFI dl "memset" TyVoid [argPtr p, argInt 98, argInt 40]
-callFFI dl "memset" TyVoid [argPtr p, argInt 97, argInt 20]
-callFFI dl "strfry" tyString [argPtr p]
-callFFI dl "free" TyVoid [argPtr p]
+dl <- dlopen "" [RTLD_NOW]
+p <- callFFI dl "calloc" (retPtr retWord8) [argInt 1, argInt 41]
+callFFI dl "memset" RetVoid [argPtr p, argInt 98, argInt 40]
+callFFI dl "memset" RetVoid [argPtr p, argInt 97, argInt 20]
+callFFI dl "strfry" retString [argPtr p]
+callFFI dl "free" RetVoid [argPtr p]
 
 dl <- dlopen "" [RTLD_LAZY]
-callFFI dl "printf" tyCInt [argString "CLong %d %ld;  CInt %d %ld;  Int %d %ld\n", argCLong 42, argCLong 42, argCInt 42, argCInt 42, argInt 42, argInt 42]
+callFFI dl "printf" retCInt [argString "CLong %d %ld;  CInt %d %ld;  Int %d %ld\n", argCLong (10^10), argCLong (10^10), argCInt (10^10), argCInt (10^10), argInt (10^10), argInt (10^10)]
 -}
