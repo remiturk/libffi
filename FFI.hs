@@ -56,6 +56,9 @@ argWord16    = storableFFIArg ffi_type_uint16  :: Word16 -> IO Arg
 argWord32    = storableFFIArg ffi_type_uint32  :: Word32 -> IO Arg
 argWord64    = storableFFIArg ffi_type_uint64  :: Word64 -> IO Arg
 
+argCFloat   = storableFFIArg ffi_type_float  :: CFloat -> IO Arg
+argCDouble   = storableFFIArg ffi_type_double  :: CDouble -> IO Arg
+
 argPtr       :: Ptr a -> IO Arg
 argPtr       = storableFFIArg ffi_type_pointer
 
@@ -93,6 +96,9 @@ tyWord8  = storableFFIType ffi_type_uint8 (undefined :: Word8)
 tyWord16 = storableFFIType ffi_type_uint16 (undefined :: Word16)
 tyWord32 = storableFFIType ffi_type_uint32 (undefined :: Word32)
 tyWord64 = storableFFIType ffi_type_uint64 (undefined :: Word64)
+
+tyCFloat= storableFFIType ffi_type_float (undefined :: CFloat)
+tyCDouble= storableFFIType ffi_type_double (undefined :: CDouble)
 
 tyPtr   :: forall a. Type a -> Type (Ptr a)
 tyPtr _ = storableFFIType ffi_type_pointer (undefined :: Ptr a)

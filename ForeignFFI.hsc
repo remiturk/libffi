@@ -38,6 +38,7 @@ foreign import ccall unsafe "&" ffi_type_uint32 :: Ptr CType
 foreign import ccall unsafe "&" ffi_type_sint32 :: Ptr CType
 foreign import ccall unsafe "&" ffi_type_uint64 :: Ptr CType
 foreign import ccall unsafe "&" ffi_type_sint64 :: Ptr CType
+foreign import ccall unsafe "&" ffi_type_float  :: Ptr CType
 foreign import ccall unsafe "&" ffi_type_double :: Ptr CType
 foreign import ccall unsafe "&" ffi_type_pointer :: Ptr CType
 
