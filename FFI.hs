@@ -9,7 +9,6 @@ import System.Posix.DynamicLinker
 
 import Foreign.C.Types
 import Foreign.Ptr
-import Foreign.ForeignPtr
 import Foreign.Storable
 import Foreign.C.String
 import Foreign.Marshal
@@ -26,7 +25,13 @@ ffi_type_hs_word = case sizeOf (undefined :: Word) of
                     8   -> ffi_type_uint64
                     _   -> error "ffi_type_hs_word: unsupported sizeOf (_ :: Word)"
 
-data Arg    = Arg (Ptr CType) (ForeignPtr CValue)
+data Arg   = Arg !(Ptr CType) !(Ptr CValue) !(IO ())
+
+unzipArgs   :: [Arg] -> ([Ptr CType], [Ptr CValue], [IO ()])
+unzipArgs []= ([], [], [])
+unzipArgs (Arg cType cValue free : args)
+            = case unzipArgs args of
+                (cTypes, cValues, frees) -> (cType : cTypes, cValue : cValues, free : frees)
 
 argCInt     = mkStorableArg ffi_type_sint   :: CInt -> IO Arg
 argCUInt    = mkStorableArg ffi_type_uint   :: CUInt -> IO Arg
@@ -55,19 +60,16 @@ argString   :: String -> IO Arg
 argString   = customPointerArg newCString free
 
 customPointerArg :: (a -> IO (Ptr b)) -> (Ptr b -> IO ()) -> a -> IO Arg
-customPointerArg new free a = do
-    pA <- new a
-    fp <- mallocForeignPtr
-    withForeignPtr fp $ \ptr -> poke ptr pA
-    finalizer <- mkFinalizerPtr (const $ free pA)
-    addForeignPtrFinalizer finalizer fp
-    return (Arg ffi_type_pointer (castForeignPtr fp))
+customPointerArg newA freeA a = do
+    p <- newA a
+    pp <- new p
+    return $ Arg ffi_type_pointer (castPtr pp) (free pp >> freeA p)
 
 mkStorableArg :: Storable a => Ptr CType -> a -> IO Arg
 mkStorableArg cType a = do
-    fp <- mallocForeignPtr
-    withForeignPtr fp $ \ptr -> poke ptr a
-    return (Arg cType (castForeignPtr fp))
+    p <- malloc
+    poke p a
+    return $ Arg cType (castPtr p) (free p)
 
 data RetType a = RetType (Ptr CType) ((Ptr CValue -> IO ()) -> IO a)
 
@@ -106,12 +108,6 @@ mkStorableRetType cType
             = RetType cType
                 (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr)
 
-cTypeOfArg :: Arg -> Ptr CType
-cTypeOfArg (Arg cType _) = cType
-
-cValueOfArg :: Arg -> ForeignPtr CValue
-cValueOfArg (Arg _ cValue) = cValue
-
 callFFI :: DL -> String -> RetType a -> [IO Arg] -> IO a
 callFFI dl sym retType args = do
     funPtr <- dlsym dl sym
@@ -119,14 +115,17 @@ callFFI dl sym retType args = do
     callFFI' funPtr retType args'
 
 callFFI' funPtr (RetType cRetType withRet) args
-    = allocaBytes cif_size $ \cif -> do
-        withArray (map cTypeOfArg args) $ \cTypes -> do
-            status <- ffi_prep_cif cif ffi_default_abi (genericLength args) cRetType cTypes
+    = allocaBytes sizeOf_cif $ \cif -> do
+        withArray cTypes $ \cTypesPtr -> do
+            status <- ffi_prep_cif cif ffi_default_abi (genericLength args) cRetType cTypesPtr
             unless (status == ffi_ok) $
                 error "callFFI: ffi_prep_cif failed"
-            withMany withForeignPtr (map cValueOfArg args) $ \argPtrs -> do
-                withArray argPtrs $ \cArgPtrs -> do
-                withRet $ \cRet -> ffi_call cif funPtr cRet cArgPtrs
+            withArray cValues $ \cValuesPtr -> do
+                ret <- withRet (\cRet -> ffi_call cif funPtr cRet cValuesPtr)
+                sequence_ frees
+                return ret
+    where
+        (cTypes, cValues, frees) = unzipArgs args
 
 {-
 dl <- dlopen "" [RTLD_NOW]

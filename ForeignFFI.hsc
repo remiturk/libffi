@@ -7,7 +7,6 @@ import Data.Int
 import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
-import Foreign.ForeignPtr
 import Foreign.Storable
 
 data CValue
@@ -23,8 +22,8 @@ ffi_default_abi = #const FFI_DEFAULT_ABI
 ffi_ok          :: C_ffi_status
 ffi_ok          = #const FFI_OK
 
-cif_size :: Int
-cif_size = #size ffi_cif
+sizeOf_cif :: Int
+sizeOf_cif = #size ffi_cif
 
 foreign import ccall unsafe "&" ffi_type_void :: Ptr CType
 foreign import ccall unsafe "&" ffi_type_sint8 :: Ptr CType
@@ -67,7 +66,3 @@ foreign import ccall unsafe ffi_prep_cif
 
 foreign import ccall unsafe ffi_call
     :: Ptr CIF -> FunPtr a -> Ptr CValue -> Ptr (Ptr CValue) -> IO ()
-
-foreign import ccall unsafe "wrapper" mkFinalizerPtr
-                -- :: (Ptr a -> IO ()) -> IO (FunPtr (Ptr a -> IO ()))
-                :: (Ptr a -> IO ()) -> IO (FinalizerPtr a)
