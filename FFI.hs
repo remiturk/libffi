@@ -12,6 +12,8 @@ import Foreign.Ptr
 import Foreign.Storable
 import Foreign.C.String
 import Foreign.Marshal
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Unsafe as BSU
 
 import ForeignFFI
 
@@ -59,6 +61,9 @@ argPtr      = mkStorableArg ffi_type_pointer
 argString   :: String -> IO Arg
 argString   = customPointerArg newCString free
 
+argConstByteString  :: BS.ByteString -> IO Arg
+argConstByteString  = customPointerArg (flip BSU.unsafeUseAsCString return) (const $ return ())
+
 customPointerArg :: (a -> IO (Ptr b)) -> (Ptr b -> IO ()) -> a -> IO Arg
 customPointerArg newA freeA a = do
     p <- newA a
@@ -102,6 +107,14 @@ retPtr _    = mkStorableRetType ffi_type_pointer
 retString   :: RetType String
 retString   = RetType ffi_type_pointer
                 (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr >>= peekCString)
+
+retByteString :: RetType BS.ByteString
+retByteString = RetType ffi_type_pointer
+                (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr >>= BS.packCString)
+
+retMallocByteString :: RetType BS.ByteString
+retMallocByteString = RetType ffi_type_pointer
+                        (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr >>= BSU.unsafePackMallocCString)
 
 mkStorableRetType :: Storable a => Ptr CType -> RetType a
 mkStorableRetType cType
