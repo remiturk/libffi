@@ -27,54 +27,48 @@ ffi_type_hs_word = case sizeOf (undefined :: Word) of
                     8   -> ffi_type_uint64
                     _   -> error "ffi_type_hs_word: unsupported sizeOf (_ :: Word)"
 
-data Arg   = Arg !(Ptr CType) !(Ptr CValue) !(IO ())
+newtype Arg = Arg { unArg :: IO (Ptr CType, Ptr CValue, IO ()) }
 
-unzipArgs   :: [Arg] -> ([Ptr CType], [Ptr CValue], [IO ()])
-unzipArgs []= ([], [], [])
-unzipArgs (Arg cType cValue free : args)
-            = case unzipArgs args of
-                (cTypes, cValues, frees) -> (cType : cTypes, cValue : cValues, free : frees)
+argCInt     = mkStorableArg ffi_type_sint   :: CInt -> Arg
+argCUInt    = mkStorableArg ffi_type_uint   :: CUInt -> Arg
+argCLong    = mkStorableArg ffi_type_slong  :: CLong -> Arg
+argCULong   = mkStorableArg ffi_type_ulong  :: CULong -> Arg
 
-argCInt     = mkStorableArg ffi_type_sint   :: CInt -> IO Arg
-argCUInt    = mkStorableArg ffi_type_uint   :: CUInt -> IO Arg
-argCLong    = mkStorableArg ffi_type_slong  :: CLong -> IO Arg
-argCULong   = mkStorableArg ffi_type_ulong  :: CULong -> IO Arg
+argInt      = mkStorableArg ffi_type_hs_int :: Int -> Arg
+argInt8     = mkStorableArg ffi_type_sint8  :: Int8 -> Arg
+argInt16    = mkStorableArg ffi_type_sint16 :: Int16 -> Arg
+argInt32    = mkStorableArg ffi_type_sint32 :: Int32 -> Arg
+argInt64    = mkStorableArg ffi_type_sint64 :: Int64 -> Arg
 
-argInt      = mkStorableArg ffi_type_hs_int :: Int -> IO Arg
-argInt8     = mkStorableArg ffi_type_sint8  :: Int8 -> IO Arg
-argInt16    = mkStorableArg ffi_type_sint16 :: Int16 -> IO Arg
-argInt32    = mkStorableArg ffi_type_sint32 :: Int32 -> IO Arg
-argInt64    = mkStorableArg ffi_type_sint64 :: Int64 -> IO Arg
+argWord     = mkStorableArg ffi_type_hs_word:: Word -> Arg
+argWord8    = mkStorableArg ffi_type_uint8  :: Word8 -> Arg
+argWord16   = mkStorableArg ffi_type_uint16 :: Word16 -> Arg
+argWord32   = mkStorableArg ffi_type_uint32 :: Word32 -> Arg
+argWord64   = mkStorableArg ffi_type_uint64 :: Word64 -> Arg
 
-argWord     = mkStorableArg ffi_type_hs_word:: Word -> IO Arg
-argWord8    = mkStorableArg ffi_type_uint8  :: Word8 -> IO Arg
-argWord16   = mkStorableArg ffi_type_uint16 :: Word16 -> IO Arg
-argWord32   = mkStorableArg ffi_type_uint32 :: Word32 -> IO Arg
-argWord64   = mkStorableArg ffi_type_uint64 :: Word64 -> IO Arg
+argCFloat   = mkStorableArg ffi_type_float  :: CFloat -> Arg
+argCDouble  = mkStorableArg ffi_type_double :: CDouble -> Arg
 
-argCFloat   = mkStorableArg ffi_type_float  :: CFloat -> IO Arg
-argCDouble  = mkStorableArg ffi_type_double :: CDouble -> IO Arg
-
-argPtr      :: Ptr a -> IO Arg
+argPtr      :: Ptr a -> Arg
 argPtr      = mkStorableArg ffi_type_pointer
 
-argString   :: String -> IO Arg
+argString   :: String -> Arg
 argString   = customPointerArg newCString free
 
-argConstByteString  :: BS.ByteString -> IO Arg
+argConstByteString  :: BS.ByteString -> Arg
 argConstByteString  = customPointerArg (flip BSU.unsafeUseAsCString return) (const $ return ())
 
-customPointerArg :: (a -> IO (Ptr b)) -> (Ptr b -> IO ()) -> a -> IO Arg
-customPointerArg newA freeA a = do
+customPointerArg :: (a -> IO (Ptr b)) -> (Ptr b -> IO ()) -> a -> Arg
+customPointerArg newA freeA a = Arg $ do
     p <- newA a
     pp <- new p
-    return $ Arg ffi_type_pointer (castPtr pp) (free pp >> freeA p)
+    return $ (ffi_type_pointer, castPtr pp, free pp >> freeA p)
 
-mkStorableArg :: Storable a => Ptr CType -> a -> IO Arg
-mkStorableArg cType a = do
+mkStorableArg :: Storable a => Ptr CType -> a -> Arg
+mkStorableArg cType a = Arg $ do
     p <- malloc
     poke p a
-    return $ Arg cType (castPtr p) (free p)
+    return $ (cType, castPtr p, free p)
 
 data RetType a = RetType (Ptr CType) ((Ptr CValue -> IO ()) -> IO a)
 
@@ -121,14 +115,10 @@ mkStorableRetType cType
             = RetType cType
                 (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr)
 
-callFFI :: DL -> String -> RetType a -> [IO Arg] -> IO a
-callFFI dl sym retType args = do
-    funPtr <- dlsym dl sym
-    args' <- sequence args
-    callFFI' funPtr retType args'
-
-callFFI' funPtr (RetType cRetType withRet) args
+callFFI :: FunPtr a -> RetType b -> [Arg] -> IO b
+callFFI funPtr (RetType cRetType withRet) args
     = allocaBytes sizeOf_cif $ \cif -> do
+        (cTypes, cValues, frees) <- unzip3 `liftM` mapM unArg args
         withArray cTypes $ \cTypesPtr -> do
             status <- ffi_prep_cif cif ffi_default_abi (genericLength args) cRetType cTypesPtr
             unless (status == ffi_ok) $
@@ -137,8 +127,6 @@ callFFI' funPtr (RetType cRetType withRet) args
                 ret <- withRet (\cRet -> ffi_call cif funPtr cRet cValuesPtr)
                 sequence_ frees
                 return ret
-    where
-        (cTypes, cValues, frees) = unzipArgs args
 
 {-
 dl <- dlopen "" [RTLD_NOW]

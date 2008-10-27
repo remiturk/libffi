@@ -1,10 +1,10 @@
 .PHONY: all
 
 %.hs: %.hsc
-	hsc2hs $<
+	hsc2hs -I /scratch/rturk/libffi/include $<
 
 %.o: %.hs
 	ghc --make $<
 
-all: ForeignFFI.o
-	ghci FFI -lffi
+all: Foreign/LibFFI/Internal.o
+	ghci Foreign/LibFFI -lffi
