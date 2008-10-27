@@ -31,6 +31,11 @@ ffi_type_wchar  = case sizeOf (undefined :: CWchar) of
                     8   -> ffi_type_sint64
                     _   -> error "ffi_type_wchar of unsupported size"
 
+ffi_type_size   = case sizeOf (undefined :: CSize) of
+                    4   -> ffi_type_uint32
+                    8   -> ffi_type_uint64
+                    _   -> error "ffi_type_size of unsupported size"
+
 ffi_type_uint   = case sizeOf (undefined :: CUInt) of
                     4   -> ffi_type_uint32
                     8   -> ffi_type_uint64

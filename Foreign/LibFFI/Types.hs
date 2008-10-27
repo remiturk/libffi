@@ -37,6 +37,8 @@ argWord64   = mkStorableArg ffi_type_uint64 :: Word64 -> Arg
 argCFloat   = mkStorableArg ffi_type_float  :: CFloat -> Arg
 argCDouble  = mkStorableArg ffi_type_double :: CDouble -> Arg
 
+argCSize    = mkStorableArg ffi_type_size   :: CSize -> Arg
+
 argCChar    = mkStorableArg ffi_type_schar  :: CChar -> Arg
 argCUChar   = mkStorableArg ffi_type_uchar  :: CUChar -> Arg
 
@@ -73,6 +75,8 @@ retWord64   = mkStorableRetType ffi_type_uint64 :: RetType Word64
 
 retCFloat   = mkStorableRetType ffi_type_float  :: RetType CFloat
 retCDouble  = mkStorableRetType ffi_type_double :: RetType CDouble
+
+retCSize    = mkStorableRetType ffi_type_size   :: RetType CSize
 
 retCChar    = mkStorableRetType ffi_type_schar  :: RetType CChar
 retCUChar   = mkStorableRetType ffi_type_uchar  :: RetType CUChar
