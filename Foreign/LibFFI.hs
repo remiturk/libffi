@@ -1,4 +1,4 @@
-module FFI where
+module Foreign.LibFFI where
 
 import Control.Monad
 import Data.List
@@ -15,7 +15,7 @@ import Foreign.Marshal
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as BSU
 
-import ForeignFFI
+import Foreign.LibFFI.Internal
 
 ffi_type_hs_int = case sizeOf (undefined :: Int) of
                     4   -> ffi_type_sint32

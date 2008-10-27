@@ -1,5 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls #-}
-module ForeignFFI where
+module Foreign.LibFFI.Internal where
 
 #include <ffi.h>
 
