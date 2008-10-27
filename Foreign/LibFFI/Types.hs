@@ -86,14 +86,14 @@ retCWchar   = mkStorableRetType ffi_type_schar  :: RetType CWchar
 retPtr      :: RetType a -> RetType (Ptr a)
 retPtr _    = mkStorableRetType ffi_type_pointer
 
-retString   :: RetType String
-retString   = RetType ffi_type_pointer
-                (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr >>= peekCString)
+retCString          :: RetType CString
+retCString          = retPtr retCChar
 
-retByteString :: RetType BS.ByteString
-retByteString = RetType ffi_type_pointer
-                (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr >>= BS.packCString)
+retString           :: RetType String
+retString           = withRetType peekCString (retPtr retCChar)
+
+retByteString       :: RetType BS.ByteString
+retByteString       = withRetType BS.packCString (retPtr retCChar)
 
 retMallocByteString :: RetType BS.ByteString
-retMallocByteString = RetType ffi_type_pointer
-                        (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr >>= BSU.unsafePackMallocCString)
+retMallocByteString = withRetType BSU.unsafePackMallocCString (retPtr retCChar)
