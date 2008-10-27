@@ -34,7 +34,11 @@ mkStorableArg cType a = Arg $ do
 data RetType a = RetType (Ptr CType) ((Ptr CValue -> IO ()) -> IO a)
 
 instance Functor RetType where
-    fmap f (RetType cType withPoke) = RetType cType (fmap f . withPoke)
+    fmap f  = withRetType (return . f)
+
+withRetType :: (a -> IO b) -> RetType a -> RetType b
+withRetType f (RetType cType withPoke)
+            = RetType cType (withPoke >=> f)
 
 mkStorableRetType :: Storable a => Ptr CType -> RetType a
 mkStorableRetType cType
