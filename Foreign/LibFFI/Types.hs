@@ -38,6 +38,7 @@ argCFloat   = mkStorableArg ffi_type_float  :: CFloat -> Arg
 argCDouble  = mkStorableArg ffi_type_double :: CDouble -> Arg
 
 argCSize    = mkStorableArg ffi_type_size   :: CSize -> Arg
+argCTime    = mkStorableArg ffi_type_size   :: CTime -> Arg
 
 argCChar    = mkStorableArg ffi_type_schar  :: CChar -> Arg
 argCUChar   = mkStorableArg ffi_type_uchar  :: CUChar -> Arg
@@ -77,6 +78,7 @@ retCFloat   = mkStorableRetType ffi_type_float  :: RetType CFloat
 retCDouble  = mkStorableRetType ffi_type_double :: RetType CDouble
 
 retCSize    = mkStorableRetType ffi_type_size   :: RetType CSize
+retCTime    = mkStorableRetType ffi_type_time   :: RetType CTime
 
 retCChar    = mkStorableRetType ffi_type_schar  :: RetType CChar
 retCUChar   = mkStorableRetType ffi_type_uchar  :: RetType CUChar
