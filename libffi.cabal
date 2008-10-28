@@ -1,0 +1,17 @@
+Name:               libffi
+Version:            0.1
+Description:        Simple bindings to libffi
+License:            BSD3
+License-file:       LICENSE
+Author:             Remi Turk
+Maintainer:         remi.turk@gmail.com
+Build-Depends:      base, bytestring
+Build-Type:         Simple
+
+exposed-modules:    Foreign.LibFFI,
+                    Foreign.LibFFI.Base,
+                    Foreign.LibFFI.Types,
+                    Foreign.LibFFI.FFITypes,
+                    Foreign.LibFFI.Internal
+ghc-options:        -O2
+extra-libraries:    ffi
