@@ -45,6 +45,18 @@ mkStorableRetType cType
             = RetType cType
                 (\write -> alloca $ \ptr -> write (castPtr ptr) >> peek ptr)
 
+newStorableStructArgRet :: Storable a => [Ptr CType] -> IO (a -> Arg, RetType a, IO ())
+newStorableStructArgRet cTypes = do
+    (cType, freeit) <- newStructCType cTypes
+    return (mkStorableArg cType, mkStorableRetType cType, freeit)
+
+newStructCType  :: [Ptr CType] -> IO (Ptr CType, IO ())
+newStructCType cTypes = do
+    ffi_type <- mallocBytes sizeOf_ffi_type
+    elements <- newArray0 nullPtr cTypes
+    init_ffi_type ffi_type elements
+    return (ffi_type, free ffi_type >> free elements)
+
 callFFI :: FunPtr a -> RetType b -> [Arg] -> IO b
 callFFI funPtr (RetType cRetType withRet) args
     = allocaBytes sizeOf_cif $ \cif -> do

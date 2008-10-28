@@ -25,6 +25,16 @@ ffi_ok          = #const FFI_OK
 sizeOf_cif :: Int
 sizeOf_cif = #size ffi_cif
 
+sizeOf_ffi_type :: Int
+sizeOf_ffi_type = #size ffi_type
+
+init_ffi_type   :: Ptr CType -> Ptr (Ptr CType) -> IO ()
+init_ffi_type cType cTypes = do
+    (#poke ffi_type, size) cType (0 :: CSize)
+    (#poke ffi_type, alignment) cType (0 :: CUShort)
+    (#poke ffi_type, type) cType ((#const FFI_TYPE_STRUCT) :: CUShort)
+    (#poke ffi_type, elements) cType cTypes
+
 foreign import ccall unsafe ffi_prep_cif
     :: Ptr CIF -> C_ffi_abi -> CUInt -> Ptr CType -> Ptr (Ptr CType) -> IO C_ffi_status
 
