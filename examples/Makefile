@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-all: Time mytime.so
+all: CTime mytime.so
 
 %.o: %.c
 	gcc $(CFLAGS) -fPIC -c $<
@@ -16,7 +16,7 @@ mytime.so: mytime.o
 %: %.hs
 	ghc --make $<
 
-Time: Time.hs
+CTime: CTime.hs
 
 clean:
-	rm -f Time Time.hs *.o *.hi *.so core core.*
+	rm -f CTime CTime.hs *.o *.hi *.so core core.*
