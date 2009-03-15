@@ -26,6 +26,7 @@ module Foreign.LibFFI.Types (
     argCUChar,
     argCWchar,
     argPtr,
+    argFunPtr,
     -- ** Strings
     argString,
     argByteString,
@@ -57,6 +58,7 @@ module Foreign.LibFFI.Types (
     retCUChar,
     retCWchar,
     retPtr,
+    retFunPtr,
     -- ** Strings
     retCString,
     retString,
@@ -134,6 +136,9 @@ argCWchar   = mkStorableArg ffi_type_schar
 argPtr      :: Ptr a -> Arg
 argPtr      = mkStorableArg ffi_type_pointer
 
+argFunPtr   :: FunPtr a -> Arg
+argFunPtr   = mkStorableArg ffi_type_pointer
+
 {- | The string argument is passed to C as a char * pointer, which is freed afterwards.
      The argument should not contain zero-bytes. -}
 argString   :: String -> Arg
@@ -198,6 +203,9 @@ retCUChar   = mkStorableRetType ffi_type_uchar
 
 retCWchar   :: RetType CWchar
 retCWchar   = mkStorableRetType ffi_type_schar
+
+retFunPtr   :: RetType a -> RetType (FunPtr a)
+retFunPtr _ = mkStorableRetType ffi_type_pointer
 
 retPtr      :: RetType a -> RetType (Ptr a)
 retPtr _    = mkStorableRetType ffi_type_pointer
