@@ -11,7 +11,7 @@ all: MemSpeed CCall CTime mytime.so
 mytime.so: mytime.o
 
 %.hs: %.hsc
-	hsc2hs $<
+	hsc2hs -I/usr/lib/ghc-6.10.1/include $<
 
 %: %.hs
 	ghc --make $<
@@ -19,4 +19,4 @@ mytime.so: mytime.o
 CTime: CTime.hs
 
 clean:
-	rm -f CTime CTime.hs *.o *.hi *.so core core.*
+	rm -f MemSpeed CCall CTime CTime.hs *.o *.hi *.so core core.*
