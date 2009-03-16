@@ -9,12 +9,13 @@ import CPUTime
 import Time
 import Ratio
 import System.Environment
+import System.Exit
 
 main = withDL "" [RTLD_NOW] $ \dl -> do
     args <- getArgs
-    let sz = case args of
-                [n] -> read n * 2^20
-                []  -> 3 * 2^30
+    sz <- case args of
+                [n] -> return $ (read n * 2^20) `quot` 2
+                []  -> putStrLn "usage: MemSpeed megabytes-to-use" >> exitWith (ExitFailure 1)
 
     memset <- dlsym dl "memset"
     memcpy <- dlsym dl "memcpy"
