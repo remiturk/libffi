@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-all: CTime mytime.so
+all: MemSpeed CCall CTime mytime.so
 
 %.o: %.c
 	gcc $(CFLAGS) -fPIC -c $<
