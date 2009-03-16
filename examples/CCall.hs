@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
 import Control.Applicative hiding (Alternative(..), many)
@@ -111,33 +112,35 @@ pArg = liftM S pRead
             Nothing -> fail "no such identifier"
             Just v  -> return v
 
-pRet :: CharParser st (RetType Val)
+pRet :: CharParser st (Maybe (RetType Val))
 pRet = do
     t <- many1 alphaNum
     case t of
-        "i"     -> return $ fmap I      retCInt
-        "l"     -> return $ fmap IL     retCLong
-        "i8"    -> return $ fmap I8     retInt8
-        "i16"   -> return $ fmap I16    retInt16
-        "i32"   -> return $ fmap I32    retInt32
-        "i64"   -> return $ fmap I64    retInt64
-        "u"     -> return $ fmap U      retCUInt
-        "ul"    -> return $ fmap UL     retCULong
-        "u8"    -> return $ fmap U8     retWord8
-        "u16"   -> return $ fmap U16    retWord16
-        "u32"   -> return $ fmap U32    retWord32
-        "u64"   -> return $ fmap U64    retWord64
-        "p"     -> return $ fmap P      (retPtr retVoid)
-        "z"     -> return $ fmap Z      retCSize
-        "f"     -> return $ fmap F      retCFloat
-        "d"     -> return $ fmap D      retCDouble
-        "s"     -> return $ fmap S      retString
+        "v"     -> return Nothing
+        "i"     -> return $ Just $ fmap I   retCInt
+        "l"     -> return $ Just $ fmap IL  retCLong
+        "i8"    -> return $ Just $ fmap I8  retInt8
+        "i16"   -> return $ Just $ fmap I16 retInt16
+        "i32"   -> return $ Just $ fmap I32 retInt32
+        "i64"   -> return $ Just $ fmap I64 retInt64
+        "u"     -> return $ Just $ fmap U   retCUInt
+        "ul"    -> return $ Just $ fmap UL  retCULong
+        "u8"    -> return $ Just $ fmap U8  retWord8
+        "u16"   -> return $ Just $ fmap U16 retWord16
+        "u32"   -> return $ Just $ fmap U32 retWord32
+        "u64"   -> return $ Just $ fmap U64 retWord64
+        "p"     -> return $ Just $ fmap P   (retPtr retVoid)
+        "z"     -> return $ Just $ fmap Z   retCSize
+        "f"     -> return $ Just $ fmap F   retCFloat
+        "d"     -> return $ Just $ fmap D   retCDouble
+        "s"     -> return $ Just $ fmap S   retString
         _       -> fail "invalid type"
 
 pCall :: CharParser (Map String Val) ((String -> IO (FunPtr a)) -> IO (Maybe (String, Val)))
 pCall = do
     mbAssign <- optionMaybe $ try $ pIdent <* (spaces >> char '=' >> spaces)
-    mbRet <- optionMaybe $ try $ pRet <* space
+    mbRet <- pRet
+    space
     sym <- pIdent
     vals <- many (space >> pArg)
     let call f retType = return $ \load -> load sym >>= \fp -> f <$> callFFI fp retType (map valToArg vals)
@@ -150,23 +153,24 @@ pCall = do
 repl env = do
     putStr "> "
     hFlush stdout
-    s <- getLine `catch` (const (return ":q") :: IOException -> IO String)
+    s <- getLine `catch` (\(e :: IOException) -> return ":q")
     case s of
         ":q" -> return ()
         ":l" -> do
             forM_ (Map.toList env) $ \(ident, val) -> putStrLn $ ident ++ " = " ++ show val
             repl env
-        ':':'p':' ':s -> do
-            forM_ (words s) $ \ident -> do
-                case Map.lookup ident env of
-                    Nothing -> putStrLn ("No such identifier: " ++ show ident)
-                    Just val -> print val
-            repl env
         _ -> do
-            case runParser pCall env "repl" s of
-                Left err    -> print err >> repl env
-                Right call  -> do
-                    mbAssign <- call (dlsym Default)
-                    repl $ maybe id (uncurry Map.insert) mbAssign env
+            case words s of
+                [ident] -> do
+                    case Map.lookup ident env of
+                        Nothing -> putStrLn ("No such identifier: " ++ show ident)
+                        Just val -> print val
+                    repl env
+                _ -> case runParser pCall env "repl" s of
+                        Left err    -> print err >> repl env
+                        Right call  -> do
+                            mbAssign <- call (dlsym Default)
+                                            `catch` (\(e :: IOException) -> print e >> return Nothing)
+                            repl $ maybe id (uncurry Map.insert) mbAssign env
 
 main = repl Map.empty
