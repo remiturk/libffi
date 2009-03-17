@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls #-}
+{- | The internals of the C library libffi -}
 module Foreign.LibFFI.Internal where
 
 #include <ffi.h>

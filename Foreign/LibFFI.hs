@@ -1,5 +1,7 @@
 {- |
-Allocate 1GB of memory, zero it, and crash:
+This is the only module that normal users should need to import.
+
+As an example, allocate 1GB of memory, zero it, and crash:
 
 @
 import System.Posix.DynamicLinker
@@ -18,6 +20,7 @@ module Foreign.LibFFI
     (Arg
     ,RetType
     ,callFFI
+    ,withRetType
     ,module Foreign.LibFFI.Types
     ) where
 

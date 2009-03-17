@@ -1,3 +1,4 @@
+{- | This module defines the basic libffi machinery. You will need this to create support for new ffi types. -}
 module Foreign.LibFFI.Base where
 
 import Control.Monad

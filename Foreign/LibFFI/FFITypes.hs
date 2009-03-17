@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{- | The pointers exported and used by the C libffi describing basic ffi types. -}
 module Foreign.LibFFI.FFITypes where
 
 import Data.Int
