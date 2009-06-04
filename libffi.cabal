@@ -6,6 +6,7 @@ License-file:       LICENSE
 Copyright:          Remi Turk 2008-2009
 Author:             Remi Turk
 Maintainer:         remi.turk@gmail.com
+Homepage:           http://haskell.org/haskellwiki/Library/libffi
 Stability:          alpha
 Synopsis:           A binding to libffi
 Tested-With:        GHC == 6.10.1
