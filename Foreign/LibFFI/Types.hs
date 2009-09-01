@@ -153,7 +153,7 @@ argConstByteString  :: BS.ByteString -> Arg
 argConstByteString  = customPointerArg (flip BSU.unsafeUseAsCString return) (const $ return ())
 
 retVoid     :: RetType ()
-retVoid     = RetType ffi_type_void (\write -> write nullPtr >> return ())
+retVoid     = RetType (\write -> write ffi_type_void nullPtr >> return ())
 
 retCInt     :: RetType CInt
 retCInt     = mkStorableRetType ffi_type_sint
