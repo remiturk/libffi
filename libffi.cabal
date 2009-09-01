@@ -1,5 +1,5 @@
 Name:               libffi
-Version:            0.1
+Version:            0.2
 Description:        A binding to libffi, allowing C functions of types only known at runtime to be called from Haskell.
 License:            BSD3
 License-file:       LICENSE
@@ -10,7 +10,7 @@ Homepage:           http://haskell.org/haskellwiki/Library/libffi
 Stability:          alpha
 Synopsis:           A binding to libffi
 Tested-With:        GHC == 6.10.1
-Build-Depends:      base, bytestring
+Build-Depends:      base >= 3 && < 5, bytestring
 Build-Type:         Simple
 Category:           Foreign
 
