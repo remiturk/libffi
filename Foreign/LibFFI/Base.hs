@@ -55,17 +55,17 @@ callFFI funPtr (RetType actRet) args
         allocaArray n $ \cTypesPtr ->
             allocaArray n $ \cValuesPtr ->
                 let
-                    go i [] = actRet $ \cRetType cRetValue -> do
+                    doCall  = actRet $ \cRetType cRetValue -> do
                                 status <- ffi_prep_cif cif ffi_default_abi (fromIntegral n) cRetType cTypesPtr
                                 unless (status == ffi_ok) $
                                     error "callFFI: ffi_prep_cif failed"
                                 ffi_call cif funPtr cRetValue cValuesPtr
-                    go i (Arg actArg : args) = do
-                        actArg $ \cType cValue -> do
-                            pokeElemOff cTypesPtr i cType
-                            pokeElemOff cValuesPtr i cValue
-                            go (succ i) args
+                    addArg (i, Arg actArg) goArgs
+                            = actArg $ \cType cValue -> do
+                                pokeElemOff cTypesPtr i cType
+                                pokeElemOff cValuesPtr i cValue
+                                goArgs
                 in
-                    go 0 args
+                    foldr addArg doCall $ zip [0..] args
     where
         n = length args
