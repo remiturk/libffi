@@ -1,4 +1,3 @@
-- things are not exception-safe right now
 - new api based on something like:
 
 	mkFun :: Fun a -> IO a

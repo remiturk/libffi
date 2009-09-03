@@ -9,7 +9,7 @@ Maintainer:         remi.turk@gmail.com
 Homepage:           http://haskell.org/haskellwiki/Library/libffi
 Stability:          alpha
 Synopsis:           A binding to libffi
-Tested-With:        GHC == 6.10.1
+Tested-With:        GHC == 6.10.3
 Build-Depends:      base >= 3 && < 5, bytestring
 Build-Type:         Simple
 Category:           Foreign
