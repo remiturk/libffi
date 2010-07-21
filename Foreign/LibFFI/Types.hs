@@ -123,7 +123,7 @@ argCUChar   :: CUChar -> Arg
 argCUChar   = mkStorableArg ffi_type_uchar
 
 argCWchar   :: CWchar -> Arg
-argCWchar   = mkStorableArg ffi_type_schar
+argCWchar   = mkStorableArg ffi_type_wchar
 
 argPtr      :: Ptr a -> Arg
 argPtr      = mkStorableArg ffi_type_pointer
@@ -190,7 +190,7 @@ retCUChar   :: RetType CUChar
 retCUChar   = mkStorableRetType ffi_type_uchar
 
 retCWchar   :: RetType CWchar
-retCWchar   = mkStorableRetType ffi_type_schar
+retCWchar   = mkStorableRetType ffi_type_wchar
 
 retFunPtr   :: RetType a -> RetType (FunPtr a)
 retFunPtr _ = mkStorableRetType ffi_type_pointer
