@@ -6,12 +6,10 @@ module Foreign.LibFFI.Types (
     argCUInt,
     argCLong,
     argCULong,
-    argInt,
     argInt8,
     argInt16,
     argInt32,
     argInt64,
-    argWord,
     argWord8,
     argWord16,
     argWord32,
@@ -38,12 +36,10 @@ module Foreign.LibFFI.Types (
     retCUInt,
     retCLong,
     retCULong,
-    retInt,
     retInt8,
     retInt16,
     retInt32,
     retInt64,
-    retWord,
     retWord8,
     retWord16,
     retWord32,
@@ -93,8 +89,6 @@ argCULong   :: CULong -> Arg
 argCULong   = mkStorableArg ffi_type_ulong
 
 -- | Note that on e.g. x86_64, Int \/= CInt
-argInt      :: Int -> Arg
-argInt      = mkStorableArg ffi_type_hs_int
 argInt8     :: Int8 -> Arg
 argInt8     = mkStorableArg ffi_type_sint8
 argInt16    :: Int16 -> Arg
@@ -104,8 +98,6 @@ argInt32    = mkStorableArg ffi_type_sint32
 argInt64    :: Int64 -> Arg
 argInt64    = mkStorableArg ffi_type_sint64
 
-argWord     :: Word -> Arg
-argWord     = mkStorableArg ffi_type_hs_word
 argWord8    :: Word8 -> Arg
 argWord8    = mkStorableArg ffi_type_uint8
 argWord16   :: Word16 -> Arg
@@ -164,8 +156,6 @@ retCLong    = mkStorableRetType ffi_type_slong
 retCULong   :: RetType CULong
 retCULong   = mkStorableRetType ffi_type_ulong
 
-retInt      :: RetType Int
-retInt      = mkStorableRetType ffi_type_hs_int
 retInt8     :: RetType Int8
 retInt8     = mkStorableRetType ffi_type_sint8
 retInt16    :: RetType Int16
@@ -175,8 +165,6 @@ retInt32    = mkStorableRetType ffi_type_sint32
 retInt64    :: RetType Int64
 retInt64    = mkStorableRetType ffi_type_sint64
 
-retWord     :: RetType Word
-retWord     = mkStorableRetType ffi_type_hs_word
 retWord8    :: RetType Word8
 retWord8    = mkStorableRetType ffi_type_uint8
 retWord16   :: RetType Word16
