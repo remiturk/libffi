@@ -19,10 +19,6 @@ import Foreign.Ptr
 import Foreign.LibFFI
 import Prelude hiding (catch)
 
-instance Applicative (GenParser tok st) where
-    pure    = return
-    (<*>)   = ap
-
 pRead   :: Read a => CharParser st a
 pRead = do
     s <- getInput
