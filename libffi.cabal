@@ -1,4 +1,5 @@
 Name:               libffi
+cabal-version:      >= 1.8
 Version:            0.2
 Description:        A binding to libffi, allowing C functions of types only known at runtime to be called from Haskell.
 License:            BSD3
@@ -10,15 +11,20 @@ Homepage:           http://haskell.org/haskellwiki/Library/libffi
 Stability:          alpha
 Synopsis:           A binding to libffi
 Tested-With:        GHC == 6.10.3
-Build-Depends:      base >= 3 && < 5, bytestring
 Build-Type:         Simple
 Category:           Foreign
 
-exposed-modules:    Foreign.LibFFI,
-                    Foreign.LibFFI.Base,
-                    Foreign.LibFFI.Types,
-                    Foreign.LibFFI.FFITypes,
-                    Foreign.LibFFI.Internal
-pkgconfig-depends: libffi
-extra-libraries:    ffi
-includes:           ffi.h ffitarget.h
+source-repository head
+  type:                git
+  location:            https://github.com/remiturk/libffi
+
+library
+  build-depends:       base >= 3 && < 5, bytestring
+  exposed-modules:     Foreign.LibFFI,
+                       Foreign.LibFFI.Base,
+                       Foreign.LibFFI.Types,
+                       Foreign.LibFFI.FFITypes,
+                       Foreign.LibFFI.Internal
+  pkgconfig-depends:   libffi
+  extra-libraries:     ffi
+  includes:            ffi.h ffitarget.h
