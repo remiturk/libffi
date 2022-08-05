@@ -1,15 +1,15 @@
 module Main where
 
 import Control.Monad
+import Data.Ratio
 import Foreign.C.Types
 import Foreign.LibFFI
 import System.Posix.DynamicLinker
 import Numeric
-import CPUTime
-import Time
-import Ratio
+import System.CPUTime
 import System.Environment
 import System.Exit
+import System.Time
 
 main = withDL "" [RTLD_NOW] $ \dl -> do
     args <- getArgs

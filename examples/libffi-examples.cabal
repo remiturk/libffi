@@ -1,0 +1,52 @@
+cabal-version:      >= 1.10
+name:               libffi-examples
+version:            0.1
+license:            BSD3
+license-file:       LICENSE
+synopsis:           libffi examples
+description:        libffi examples.
+copyright:          Remi Turk 2008-2009, Ryan Scott 2022
+author:             Ryan Scott
+maintainer:         Ryan Scott <ryan.gl.scott@gmail.com>
+homepage:           https://github.com/remiturk/libffi
+bug-reports:        https://github.com/remiturk/libffi/issues
+build-type:         Simple
+category:           Foreign
+extra-source-files: README.md
+
+source-repository head
+  type:                 git
+  location:             https://github.com/remiturk/libffi
+  subdir:               examples
+
+executable ccall
+    main-is:            CCall.hs
+    build-depends:      base >= 4 && < 5
+                      , containers
+                      , libffi
+                      , mtl
+                      , parsec
+    if !os(windows)
+      build-depends:    unix
+    hs-source-dirs:     .
+    default-language:   Haskell2010
+
+executable ctime
+    main-is:            CTime.hs
+    build-depends:      base >= 4 && < 5
+                      , libffi
+    if !os(windows)
+      build-depends:    unix
+    build-tool-depends: hsc2hs:hsc2hs
+    hs-source-dirs:     .
+    default-language:   Haskell2010
+
+executable memspeed
+    main-is:            MemSpeed.hs
+    build-depends:      base >= 4 && < 5
+                      , libffi
+                      , old-time
+    if !os(windows)
+      build-depends:    unix
+    hs-source-dirs:     .
+    default-language:   Haskell2010

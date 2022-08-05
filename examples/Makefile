@@ -1,5 +1,4 @@
-.PHONY: all clean
-
+.PHONY: all
 all: MemSpeed CCall CTime mytime.so
 
 %.o: %.c
@@ -8,15 +7,19 @@ all: MemSpeed CCall CTime mytime.so
 %.so: %.o
 	gcc $(LDFLAGS) -nostartfiles -shared -Wl,-soname,$@ $< -o $@
 
-mytime.so: mytime.o
+.PHONY: MemSpeed
+MemSpeed:
+	cabal build exe:$@
 
-%.hs: %.hsc
-	hsc2hs -I/usr/lib/ghc-6.10.1/include $<
+.PHONY: CCall
+CCall:
+	cabal build exe:$@
 
-%: %.hs
-	ghc --make $<
+.PHONY: CTime
+CTime: mytime.so
+	cabal build exe:$@
 
-CTime: CTime.hs
-
+.PHONY: clean
 clean:
-	rm -f MemSpeed CCall CTime CTime.hs *.o *.hi *.so core core.*
+	rm -f *.o *.so
+	cabal clean
