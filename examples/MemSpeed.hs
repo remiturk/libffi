@@ -4,23 +4,24 @@ import Control.Monad
 import Data.Ratio
 import Foreign.C.Types
 import Foreign.LibFFI
-import System.Posix.DynamicLinker
 import Numeric
 import System.CPUTime
 import System.Environment
 import System.Exit
 import System.Time
 
-main = withDL "" [RTLD_NOW] $ \dl -> do
+import Common
+
+main = withDynLib crtPath $ \dl -> do
     args <- getArgs
     sz <- case args of
                 [n] -> return $ (read n * 2^20) `quot` 2
                 []  -> putStrLn "usage: MemSpeed megabytes-to-use" >> exitWith (ExitFailure 1)
 
-    memset <- dlsym dl "memset"
-    memcpy <- dlsym dl "memcpy"
-    malloc <- dlsym dl "malloc"
-    free <- dlsym dl "free"
+    memset <- dynLibSym dl "memset"
+    memcpy <- dynLibSym dl "memcpy"
+    malloc <- dynLibSym dl "malloc"
+    free   <- dynLibSym dl "free"
 
     s <- callFFI malloc (retPtr retVoid) [argCSize sz]
     d <- callFFI malloc (retPtr retVoid) [argCSize sz]
