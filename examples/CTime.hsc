@@ -10,17 +10,19 @@ import Foreign.Marshal
 import Foreign.LibFFI
 import Foreign.LibFFI.Base
 import Foreign.LibFFI.FFITypes
-import System.Posix.DynamicLinker
+import System.FilePath ((<.>))
+
+import Common
 
 withDLCall :: String -> ((forall a. String -> RetType a -> [Arg] -> IO a) -> IO b) -> IO b
 withDLCall lib f = do
-    withDL lib [RTLD_NOW] $ \dl ->
+    withDynLib lib $ \dl ->
         f $ \sym ret args -> do
-                    p <- dlsym dl sym
+                    p <- dynLibSym dl sym
                     callFFI p ret args
 
 main = do
-    withDLCall "" $ \call -> do
+    withDLCall crtPath $ \call -> do
         t <- call "time" retCTime [argPtr nullPtr]
 
         with t $ \t_p -> do
@@ -31,12 +33,19 @@ main = do
                     print tm
                     print t'
 
-    withDLCall "./mytime.so" $ \call -> do
-        t <- call "time" retCTime [argPtr nullPtr]
-
-        -- struct tm actually has a few architecture dependent "hidden" fields...
+    t <- withDLCall crtPath $ \call ->
+           call "time" retCTime [argPtr nullPtr]
+    withDLCall ("./mytime" <.> dllext) $ \call -> do
         (argTM, retTM, freeTMType)
-            <- newStorableStructArgRet $ replicate 9 ffi_type_sint ++ [ffi_type_slong, ffi_type_pointer]
+            <- newStorableStructArgRet $ replicate 9 ffi_type_sint
+                 -- struct tm actually has a few architecture dependent "hidden" fields...
+#if defined(mingw32_HOST_OS)
+                 -- No hidden fields with MinGW-w64
+#elif defined(darwin_HOST_OS)
+                 ++ [ffi_type_pointer, ffi_type_slong]
+#else
+                 ++ [ffi_type_slong, ffi_type_pointer]
+#endif
             :: IO (TM -> Arg, RetType TM, IO ())
 
         tm <- call "mylocaltime" retTM [argCTime t]

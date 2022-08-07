@@ -1,11 +1,32 @@
+MACHINE := $(shell $(CC) -dumpmachine)
+ifneq (, $(findstring darwin, $(MACHINE)))
+	OS := darwin
+else ifneq (, $(findstring cygwin, $(MACHINE)))
+	OS := windows
+else ifneq (, $(findstring mingw, $(MACHINE)))
+	OS := windows
+else ifneq (, $(findstring windows, $(MACHINE)))
+	OS := windows
+else
+	OS := unix
+endif
+
+ifeq ($(OS),darwin)
+	DLLEXT := dylib
+else ifeq ($(OS),windows)
+	DLLEXT := dll
+else
+	DLLEXT := so
+endif
+
 .PHONY: all
-all: MemSpeed CCall CTime mytime.so
+all: MemSpeed CCall CTime mytime.$(DLLEXT)
 
 %.o: %.c
-	gcc $(CFLAGS) -fPIC -c $<
+	$(CC) $(CFLAGS) -fPIC -c $<
 
-%.so: %.o
-	gcc $(LDFLAGS) -nostartfiles -shared -Wl,-soname,$@ $< -o $@
+%.$(DLLEXT): %.o
+	$(CC) $(LDFLAGS) -shared $< -o $@
 
 .PHONY: MemSpeed
 MemSpeed:
@@ -16,10 +37,10 @@ CCall:
 	cabal build exe:$@
 
 .PHONY: CTime
-CTime: mytime.so
+CTime: mytime.$(DLLEXT)
 	cabal build exe:$@
 
 .PHONY: clean
 clean:
-	rm -f *.o *.so
+	rm -f *.o *.$(DLLEXT)
 	cabal clean

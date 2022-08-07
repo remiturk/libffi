@@ -13,11 +13,12 @@ import Data.Word
 import Data.Char
 import Text.ParserCombinators.Parsec
 import System.IO
-import System.Posix.DynamicLinker
 import Foreign.C.Types
 import Foreign.Ptr
 import Foreign.LibFFI
 import Prelude hiding (catch)
+
+import Common
 
 pRead   :: Read a => CharParser st a
 pRead = do
@@ -146,7 +147,7 @@ pCall = do
         (Nothing   , Nothing     )  -> call id                 (const Nothing <$> retVoid)
         (Just ident, Nothing)       -> fail "cannot assign void"
 
-repl env = do
+repl env = withDynLib crtPath $ \dl -> do
     putStr "> "
     hFlush stdout
     s <- getLine `catch` (\(e :: IOException) -> return ":q")
@@ -165,7 +166,7 @@ repl env = do
                 _ -> case runParser pCall env "repl" s of
                         Left err    -> print err >> repl env
                         Right call  -> do
-                            mbAssign <- call (dlsym Default)
+                            mbAssign <- call (dynLibSym dl)
                                             `catch` (\(e :: IOException) -> print e >> return Nothing)
                             repl $ maybe id (uncurry Map.insert) mbAssign env
 

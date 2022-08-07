@@ -14,8 +14,3 @@ After building an example, use `cabal run` to invoke the example, e.g.,
 ```
 $ cabal run CTime
 ```
-
-## Limitations
-
-The examples currently only work on Linux. See
-[issue #4](https://github.com/remiturk/libffi/issues/4).
