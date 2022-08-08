@@ -32,6 +32,10 @@ source-repository head
   type:                git
   location:            https://github.com/remiturk/libffi
 
+flag static
+  description:      Force static linking against @libffi@
+  default:          True
+
 library
   build-depends:       base >= 3 && < 5, bytestring
   exposed-modules:     Foreign.LibFFI,
@@ -39,6 +43,22 @@ library
                        Foreign.LibFFI.Types,
                        Foreign.LibFFI.FFITypes,
                        Foreign.LibFFI.Internal
-  pkgconfig-depends:   libffi
-  extra-libraries:     ffi
-  includes:            ffi.h ffitarget.h
+  if flag(static)
+    -- It would be shorter to just use this:
+    --
+    -- cc-options:        -Wl,-Bstatic -lffi -Wl,-Bdynamic
+    --
+    -- But `cabal check` doesn't like using the -l option in cc-options,
+    -- instead recommending extra-libraries. We really do need to use -l here,
+    -- however, as it is crucial that -lffi appear in between
+    -- -Wl,-Bstatic ... -Wl,-Bdynamic in order for this to work. We use
+    -- ghc-options instead to work around `cabal check`'s pickiness.
+    ghc-options:       -optl-Wl,-Bstatic -optl-Wl,-lffi -optl-Wl,-Bdynamic
+    includes:          ffi.h ffitarget.h
+    if os(darwin)
+      -- libffi already gets statically linked on Darwin when building an
+      -- executable and -Bstatic isn't supported by the linker, so we disable
+      -- the static flag.
+      build-depends:  base < 0 && > 0
+  else
+    pkgconfig-depends: libffi
