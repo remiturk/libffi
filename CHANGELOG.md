@@ -1,4 +1,4 @@
-## 0.2 [????.??.??]
+## 0.2 [2022.08.11]
 * The `libffi` library now uses `bracket` internally and should now be
   exception-safe.
 * There is a now a `ghc-bundled-libffi` `cabal` flag that makes this library
