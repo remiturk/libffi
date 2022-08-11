@@ -28,6 +28,25 @@ extra-source-files: CHANGELOG.md, README.md
 Build-Type:         Simple
 Category:           Foreign
 
+flag ghc-bundled-libffi
+  description:      When GHC is configured without @--with-system-libffi@, it
+                    will bundle its own copies of @libffi@, one of them
+                    statically linked and the other dynamically linked. This
+                    flag will force linking against the static copy of @libffi@
+                    that GHC bundles. This avoids a GHC bug
+                    (https://gitlab.haskell.org/ghc/ghc/-/issues/15397) that
+                    can arise when the linker confuses the system's dynamic
+                    @libffi@ with GHC's own dynamic @libffi@.
+
+                    Note that this flag only works when GHC is configured
+                    without the @--with-system-libffi@ option. This is the case
+                    for most GHC binary distributions, such as those provided
+                    by @ghcup@. If you are using a GHC that was configured with
+                    @--with-system-libffi@, however, you will need to disable
+                    this option and link against the system's version of
+                    @libffi@ instead.
+  default:          True
+
 source-repository head
   type:                git
   location:            https://github.com/remiturk/libffi
@@ -39,6 +58,5 @@ library
                        Foreign.LibFFI.Types,
                        Foreign.LibFFI.FFITypes,
                        Foreign.LibFFI.Internal
-  pkgconfig-depends:   libffi
-  extra-libraries:     ffi
-  includes:            ffi.h ffitarget.h
+  if !flag(ghc-bundled-libffi)
+    pkgconfig-depends: libffi
