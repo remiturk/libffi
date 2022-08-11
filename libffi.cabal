@@ -1,5 +1,5 @@
 Name:               libffi
-cabal-version:      >= 1.8
+cabal-version:      >= 1.10
 Version:            0.2
 Description:        A binding to libffi, allowing C functions of types only known at runtime to be called from Haskell.
 License:            BSD3
@@ -60,3 +60,4 @@ library
                        Foreign.LibFFI.Internal
   if !flag(ghc-bundled-libffi)
     pkgconfig-depends: libffi
+  default-language:    Haskell2010
