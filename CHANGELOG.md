@@ -1,6 +1,13 @@
 ## 0.2 [????.??.??]
 * The `libffi` library now uses `bracket` internally and should now be
   exception-safe.
+* There is a now a `ghc-bundled-libffi` `cabal` flag that makes this library
+  statically link against GHC's bundled copy of `libffi` rather than attempt to
+  link against the system `libffi`. On the vast majority of GHCs, this is the
+  most reasonable option, as linking against the system `libffi` is inherently
+  fragile. As a result, `+ghc-bundled-libffi` is now the defalut setting. See
+  the [`README`](https://github.com/remiturk/libffi/blob/master/README.md#notes-on-ghcs-bundling-of-libffi)
+  for more discussion on this point.
 * The definition of `Arg` has changed:
 
   ```diff
