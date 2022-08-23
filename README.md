@@ -42,7 +42,7 @@ would expect. This is because:
    unfortunate side effect of declaring an _unused_ dynamic dependency against
    `libffi`. Even worse is the fact that the version of dynamically linked
    `libffi` that comes with your operating system may differ from the version
-   of dynamiclly linked `libffi` that GHC bundles. When the version numbers
+   of dynamically linked `libffi` that GHC bundles. When the version numbers
    differ, this can lead to the compiled executable failing at runtime with
    mysterious errors such as:
 
