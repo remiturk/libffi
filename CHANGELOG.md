@@ -1,3 +1,7 @@
+## next [????.??.??]
+* Add `sizeAndAlignmentOfCType` to `Foreign.LibFFI.Base`, which can be used to
+  retrieve the size and alignment of a `CType`.
+
 ## 0.2 [2022.08.11]
 * The `libffi` library now uses `bracket` internally and should now be
   exception-safe.
