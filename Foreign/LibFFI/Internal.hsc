@@ -36,8 +36,17 @@ init_ffi_type cType cTypes = do
     (#poke ffi_type, type) cType ((#const FFI_TYPE_STRUCT) :: CUShort)
     (#poke ffi_type, elements) cType cTypes
 
+ffi_type_size_and_alignment :: Ptr CType -> IO (CSize, CUShort)
+ffi_type_size_and_alignment cType = do
+  size <- (#peek ffi_type, size) cType
+  alignment <- (#peek ffi_type, alignment) cType
+  return (size, alignment)
+
 foreign import ccall safe ffi_prep_cif
     :: Ptr CIF -> C_ffi_abi -> CUInt -> Ptr CType -> Ptr (Ptr CType) -> IO C_ffi_status
 
 foreign import ccall safe ffi_call
     :: Ptr CIF -> FunPtr a -> Ptr CValue -> Ptr (Ptr CValue) -> IO ()
+
+foreign import ccall safe ffi_get_struct_offsets
+    :: C_ffi_abi -> Ptr CType -> Ptr CSize -> IO C_ffi_status
