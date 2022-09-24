@@ -1,6 +1,6 @@
 Name:               libffi
 cabal-version:      >= 1.10
-Version:            0.2
+Version:            0.2.1
 Description:        A binding to libffi, allowing C functions of types only known at runtime to be called from Haskell.
 License:            BSD3
 License-file:       LICENSE

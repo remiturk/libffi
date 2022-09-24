@@ -1,4 +1,4 @@
-## next [????.??.??]
+## 0.2.1 [2022.09.24]
 * Add `sizeAndAlignmentOfCType` to `Foreign.LibFFI.Base`, which can be used to
   retrieve the size and alignment of a `CType`.
 
