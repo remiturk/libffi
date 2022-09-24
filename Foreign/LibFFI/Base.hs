@@ -49,6 +49,22 @@ newStructCType cTypes = do
     init_ffi_type ffi_type elements
     return (ffi_type, free ffi_type >> free elements)
 
+sizeAndAlignmentOfCType :: Ptr CType -> IO (Int, Int)
+sizeAndAlignmentOfCType cType = do
+  (size, alignment) <- ffi_type_size_and_alignment cType
+  if size /= 0 && alignment /= 0
+  then return (fromIntegral size, fromIntegral alignment)
+  else do
+    -- The type's size and alignment haven't been initialized
+    -- so we force it with a call to `ffi_get_struct_offsets`.
+    -- When the `offsets` parameter is null, no offsets will be
+    -- returned, instead the type will just be laid out.
+    status <- ffi_get_struct_offsets ffi_default_abi cType nullPtr
+    unless (status == ffi_ok) $
+      error "sizeAndAlignmentOfCType: ffi_get_struct_offsets failed"
+    (size, alignment) <- ffi_type_size_and_alignment cType
+    return (fromIntegral size, fromIntegral alignment)
+
 callFFI :: FunPtr a -> RetType b -> [Arg] -> IO b
 callFFI funPtr (RetType actRet) args
     = allocaBytes sizeOf_cif $ \cif ->
