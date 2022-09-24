@@ -56,12 +56,11 @@ sizeAndAlignmentOfCType cType = do
   then return (fromIntegral size, fromIntegral alignment)
   else do
     -- The type's size and alignment haven't been initialized
-    -- so we force it with a call to `ffi_get_struct_offsets`.
-    -- When the `offsets` parameter is null, no offsets will be
-    -- returned, instead the type will just be laid out.
-    status <- ffi_get_struct_offsets ffi_default_abi cType nullPtr
+    -- so we force it with a call to `ffi_prep_cif`.
+    status <- allocaBytes sizeOf_cif $ \cif ->
+                ffi_prep_cif cif ffi_default_abi 0 cType nullPtr
     unless (status == ffi_ok) $
-      error "sizeAndAlignmentOfCType: ffi_get_struct_offsets failed"
+      error "sizeAndAlignmentOfCType: ffi_prep_cif failed"
     (size, alignment) <- ffi_type_size_and_alignment cType
     return (fromIntegral size, fromIntegral alignment)
 
