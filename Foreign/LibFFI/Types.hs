@@ -88,7 +88,6 @@ argCLong    = mkStorableArg ffi_type_slong
 argCULong   :: CULong -> Arg
 argCULong   = mkStorableArg ffi_type_ulong
 
--- | Note that on e.g. x86_64, Int \/= CInt
 argInt8     :: Int8 -> Arg
 argInt8     = mkStorableArg ffi_type_sint8
 argInt16    :: Int16 -> Arg
