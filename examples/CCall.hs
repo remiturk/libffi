@@ -2,7 +2,7 @@
 module Main where
 
 import Control.Applicative hiding (Alternative(..), many)
-import Control.Monad.State.Strict
+import Control.Monad (forM_, liftM, liftM2)
 import Control.Exception hiding (try)
 import Data.Map (Map)
 import qualified Data.Map as Map
