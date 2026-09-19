@@ -16,7 +16,7 @@ main = withDynLib crtPath $ \dl -> do
     args <- getArgs
     sz <- case args of
                 [n] -> return $ (read n * 2^20) `quot` 2
-                []  -> putStrLn "usage: MemSpeed megabytes-to-use" >> exitWith (ExitFailure 1)
+                _   -> putStrLn "usage: MemSpeed megabytes-to-use" >> exitWith (ExitFailure 1)
 
     memset <- dynLibSym dl "memset"
     memcpy <- dynLibSym dl "memcpy"
