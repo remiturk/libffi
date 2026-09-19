@@ -12,20 +12,20 @@ homepage:           https://github.com/remiturk/libffi
 bug-reports:        https://github.com/remiturk/libffi/issues
 build-type:         Simple
 category:           Foreign
-Tested-With:        GHC == 7.0.4
-                  , GHC == 7.2.2
-                  , GHC == 7.4.2
-                  , GHC == 7.6.3
-                  , GHC == 7.8.4
-                  , GHC == 7.10.3
-                  , GHC == 8.0.2
+Tested-With:        GHC == 8.0.2
                   , GHC == 8.2.2
                   , GHC == 8.4.4
                   , GHC == 8.6.5
                   , GHC == 8.8.4
                   , GHC == 8.10.7
                   , GHC == 9.0.2
-                  , GHC == 9.2.2
+                  , GHC == 9.2.8
+                  , GHC == 9.4.8
+                  , GHC == 9.6.7
+                  , GHC == 9.8.4
+                  , GHC == 9.10.3
+                  , GHC == 9.12.4
+                  , GHC == 9.14.1
 extra-source-files: README.md
 
 source-repository head
@@ -35,7 +35,7 @@ source-repository head
 
 library
     exposed-modules:    Common
-    build-depends:      base >= 4 && < 5
+    build-depends:      base >= 4.9 && < 5
     if os(windows)
       build-depends:    base >= 4.6
                       , Win32
@@ -47,7 +47,7 @@ library
 
 executable ccall
     main-is:            CCall.hs
-    build-depends:      base >= 4 && < 5
+    build-depends:      base >= 4.9 && < 5
                       , containers
                       , libffi
                       , libffi-examples
@@ -58,7 +58,7 @@ executable ccall
 
 executable ctime
     main-is:            CTime.hs
-    build-depends:      base >= 4 && < 5
+    build-depends:      base >= 4.9 && < 5
                       , filepath
                       , libffi
                       , libffi-examples
@@ -68,7 +68,7 @@ executable ctime
 
 executable memspeed
     main-is:            MemSpeed.hs
-    build-depends:      base >= 4 && < 5
+    build-depends:      base >= 4.9 && < 5
                       , libffi
                       , libffi-examples
                       , old-time
